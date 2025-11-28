@@ -294,33 +294,67 @@ public class Display {
      * User can select a Task and change its due date.
      */
 
+    /**
+     * MAIN METHOD (Refactored)
+     * The logic is now linear: Get Task -> Check if Valid -> Update Date.
+     */
     public void editDate() {
         System.out.println("Here you can edit due date of one of below tasks: \n ");
         printer.printIndexAndNameAndDueDateOfTask();
         System.out.println("\n Enter the number in front of the task you want to switch due date (0 -> Return to Menu)");
 
+        // Step 1: Abstract the complex search logic into a helper method
+        Task taskToEdit = getTaskFromUser();
+
+        // Step 2: Handle the result
+        if (taskToEdit == null) {
+            // User chose 0 or entered invalid input, return to menu
+            response();
+            return; 
+        }
+
+        // Step 3: Abstract the date parsing logic into a helper method
+        updateDateForTask(taskToEdit);
+    }
+
+    /**
+     * HELPER METHOD 1
+     * Responsibilities: Handle user input, parsing integer, and finding the task.
+     * Returns: The Task object if found, or null if cancelled/invalid.
+     */
+    private Task getTaskFromUser() {
         try {
-            int getProjectByNumber = Integer.parseInt(userInput());
-
-            if(getProjectByNumber != 0){
-            Task searched = toDoList.getTaskInToDo(getProjectByNumber - 1);
-            System.out.println("Enter new due date of task " + searched.getTitle() + " below (MM-dd-yyyy)");
-
-            while (true) {
-                try {
-                    searched.setDueDate(sdf.parse(userInput()));
-                    break;
-                } catch (ParseException e) {
-                    printer.printWrongDateFormat();
-                }
+            int taskNumber = Integer.parseInt(userInput());
+            
+            if (taskNumber == 0) {
+                return null; // User wants to go back
             }
-            System.out.println(searched.getTitle() + " Due Date is set to " + sdf.format(searched.getDueDate()));}
-            else{
-                response();
-            }
-        } catch (NumberFormatException e) {
+            
+            return toDoList.getTaskInToDo(taskNumber - 1);
+
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
             printer.printIndexOutOfReach();
-            editDate();
+            // We return null to indicate failure, rather than recursing
+            return null; 
+        }
+    }
+
+    /**
+     * HELPER METHOD 2
+     * Responsibilities: Handle the loop for date parsing.
+     */
+    private void updateDateForTask(Task task) {
+        System.out.println("Enter new due date of task " + task.getTitle() + " below (MM-dd-yyyy)");
+
+        while (true) {
+            try {
+                task.setDueDate(sdf.parse(userInput()));
+                System.out.println(task.getTitle() + " Due Date is set to " + sdf.format(task.getDueDate()));
+                break; // Success! Break the loop.
+            } catch (ParseException e) {
+                printer.printWrongDateFormat();
+                // Loop continues automatically
+            }
         }
     }
 
